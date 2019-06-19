@@ -12,7 +12,7 @@
 
 SBFE_DEV_EFUSE_JSON=$(BUILD_DIR_BASE)/esp32_dev_efuse.json
 
-.PHONY: $(SBFE_DEV_EFUSE_JSON)
+#.PHONY: $(SBFE_DEV_EFUSE_JSON)
 
 $(SBFE_DEV_EFUSE_JSON):
 	$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before default_reset values -j $@ BLK1 BLK2 FLASH_CRYPT_CNT ABS_DONE_0 MAC CODING_SCHEME
@@ -22,11 +22,16 @@ $(SBFE_DEV_EFUSE_JSON):
 #
 .PHONY: tool_check_jq
 tool_check_jq:
-	$(if $(shell which jq),,$(error \
-	   JQ tool is needed : \
-        	sudo apt install jq \
-	))
+	$(if $(shell which jq),,$(error JQ tool is needed : sudo apt install jq ))
 
+
+#
+# Variables
+#
+
+SBFE_CMPT_DIR:=$(COMPONENT_PATH)
+SBFE_DEV_KEYS_DIR=$(SBFE_CMPT_DIR)/esp-sbfe-keys
+SBFE_DEV_KEYS_EXT_DIR?=
 
 #
 # Processing at target execution the result of the efuse
@@ -39,3 +44,18 @@ sbfe-dev-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
 	$(eval SBFE_DEV_BLK2_WRITEABLE=$(shell jq -r '.BLK2.writable' $<))
 	$(eval SBFE_DEV_ENCRYPTION_SET=$(shell jq -r '.FLASH_CRYPT_CNT.value' $<))
 	$(eval SBFE_DEV_SECUREBOOT_SET=$(shell jq -r '.ABS_DONE_0.value' $<))
+
+	$(eval SBFE_DEV_KEYS_DIR_MAC_LOCAL=$(wildcard $(SBFE_DEV_KEYS_DIR)/$(SBFE_DEV_MAC_DIR)))
+	$(eval SBFE_DEV_KEYS_DIR_MAC_EXT=$(wildcard $(SBFE_DEV_KEYS_EXT_DIR)/$(SBFE_DEV_MAC_DIR)))
+	
+	$(eval SBFE_DEV_KEYS_DIR_FINAL=$(if $(SBFE_DEV_KEYS_DIR_MAC_LOCAL),\
+		$(SBFE_DEV_KEYS_DIR_MAC_LOCAL),$(SBFE_DEV_KEYS_DIR_MAC_EXT)))
+	
+	$(info Secure Boot & Flash Encryption Device Info )
+	$(info Device Mac $(SBFE_DEV_MAC), Device Coding $(SBFE_DEV_CODINGSCHEME))
+	$(info Device Hardware Keys Writable : $(SBFE_DEV_BLK1_WRITEABLE) $(SBFE_DEV_BLK2_WRITEABLE))
+	$(info Device Secure Boot ($(SBFE_DEV_SECUREBOOT_SET)), Flash Encryption ($(SBFE_DEV_ENCRYPTION_SET)))
+
+	$(info Device Hardware Keys @ $(SBFE_DEV_KEYS_DIR_FINAL))
+
+
