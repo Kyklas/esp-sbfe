@@ -87,7 +87,6 @@ sbfe-dev-check: sbfe-dev-info
 SBFE_CMD_MAKE= + \
 	PROJECT_PATH= \
 	COMPONENT_DIRS= \
-	SDKCONFIG=$(SDKCONFIG) \
 	$(MAKE) -C $(SBFE_CMPT_DIR)/esp-sbfe-subproject/ \
 	V=$(V) \
 	BUILD_DIR_BASE=$(BUILD_DIR_BASE)/esp-sbfe \

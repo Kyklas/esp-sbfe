@@ -7,5 +7,8 @@ PROJECT_NAME := esp-sbfe-flash
 
 COMPONENTS := esptool_py esp-sbfe/esp-sbfe-flash
 
+IS_BOOTLOADER_BUILD := 1
+export IS_BOOTLOADER_BUILD
+
 include $(IDF_PATH)/make/project.mk
 
