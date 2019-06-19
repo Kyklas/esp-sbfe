@@ -1,6 +1,41 @@
-#
 # ESP32 Secure Boot & Flash Encryption target
 #
 # extends the ESP IDF to handle flashing and reflashing devices with secure boot
 # and flash encryption enabled dynamically
 #
+
+
+
+#
+# JSON file containing the device info
+#
+
+SBFE_DEV_EFUSE_JSON=$(BUILD_DIR_BASE)/esp32_dev_efuse.json
+
+.PHONY: $(SBFE_DEV_EFUSE_JSON)
+
+$(SBFE_DEV_EFUSE_JSON):
+	$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before default_reset values -j $@ BLK1 BLK2 FLASH_CRYPT_CNT ABS_DONE_0 MAC CODING_SCHEME
+
+#
+# jq is used to parse the JSON file
+#
+.PHONY: tool_check_jq
+tool_check_jq:
+	$(if $(shell which jq),,$(error \
+	   JQ tool is needed : \
+        	sudo apt install jq \
+	))
+
+
+#
+# Processing at target execution the result of the efuse
+#
+sbfe-dev-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
+	$(eval SBFE_DEV_MAC=$(shell jq -r '.MAC.value_hex' $< ))
+	$(eval SBFE_DEV_MAC_DIR=$(subst :,-,$(SBFE_DEV_MAC)))
+	$(eval SBFE_DEV_CODINGSCHEME=$(shell jq -r '.CODING_SCHEME.value' $<))
+	$(eval SBFE_DEV_BLK1_WRITEABLE=$(shell jq -r '.BLK1.writable' $<))
+	$(eval SBFE_DEV_BLK2_WRITEABLE=$(shell jq -r '.BLK2.writable' $<))
+	$(eval SBFE_DEV_ENCRYPTION_SET=$(shell jq -r '.FLASH_CRYPT_CNT.value' $<))
+	$(eval SBFE_DEV_SECUREBOOT_SET=$(shell jq -r '.ABS_DONE_0.value' $<))
