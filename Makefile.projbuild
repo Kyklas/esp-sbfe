@@ -1,0 +1,6 @@
+#
+# ESP32 Secure Boot & Flash Encryption target
+#
+# extends the ESP IDF to handle flashing and reflashing devices with secure boot
+# and flash encryption enabled dynamically
+#
