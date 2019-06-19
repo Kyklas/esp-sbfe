@@ -56,6 +56,54 @@ sbfe-dev-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
 	$(info Device Hardware Keys Writable : $(SBFE_DEV_BLK1_WRITEABLE) $(SBFE_DEV_BLK2_WRITEABLE))
 	$(info Device Secure Boot ($(SBFE_DEV_SECUREBOOT_SET)), Flash Encryption ($(SBFE_DEV_ENCRYPTION_SET)))
 
-	$(info Device Hardware Keys @ $(SBFE_DEV_KEYS_DIR_FINAL))
+	$(info Device Hardware Keys @ "$(SBFE_DEV_KEYS_DIR_FINAL)")
+
+
+#
+# SBFE check compatibility
+#
+
+.PHONY: sbfe-dev-check
+
+.ONESHELL:
+SHELL=/bin/bash
+sbfe-dev-check: sbfe-dev-info
+	if [[ $(SBFE_DEV_SECUREBOOT_SET) -eq 1 ]] && [[ -z "$(SBFE_DEV_KEYS_DIR_FINAL)" ]]; then
+		echo "Device has Secure Boot enable but not keys are available"
+		exit 1
+	fi
+	
+	# Does not support flash re-encryption, re-encryption does not work with secure boot anyway	
+	if [[ $(SBFE_DEV_ENCRYPTION_SET) -gt 0 ]] && [[ -z "$(SBFE_DEV_KEYS_DIR_FINAL)" ]]; then
+		echo "Device has Flash Encryption enable but not keys are available"
+		exit 1
+	fi
+
+
+#
+# Calling SBFE targets
+#
+
+SBFE_CMD_MAKE= + \
+	PROJECT_PATH= \
+	COMPONENT_DIRS= \
+	SDKCONFIG=$(SDKCONFIG) \
+	$(MAKE) -C $(SBFE_CMPT_DIR)/esp-sbfe-subproject/ \
+	V=$(V) \
+	BUILD_DIR_BASE=$(BUILD_DIR_BASE)/esp-sbfe \
+	TEST_COMPONENTS= \
+	TESTS_ALL= \
+	EXCLUDE_COMPONENTS=
+
+SBFE_TARGETS=sbfe-flash-app
+
+.PHONY: $(SBFE_TARGETS)
+
+$(SBFE_TARGETS): sbfe-dev-check
+	$(SBFE_CMD_MAKE) $@
+
+
+
+
 
 
