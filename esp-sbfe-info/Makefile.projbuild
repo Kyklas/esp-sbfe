@@ -1,18 +1,14 @@
-# ESP32 Secure Boot & Flash Encryption target
+# ESP32 Secure Boot & Flash Encryption Info
 #
-# extends the ESP IDF to handle flashing and reflashing devices with secure boot
-# and flash encryption enabled dynamically
 #
-
-
 
 #
 # JSON file containing the device info
 #
 
-SBFE_DEV_EFUSE_JSON=$(BUILD_DIR_BASE)/esp32_dev_efuse.json
+SBFE_DEV_EFUSE_JSON=$(BUILD_DIR_BASE)/esp_sbfe_dev_efuse.json
 
-#.PHONY: $(SBFE_DEV_EFUSE_JSON)
+.PHONY: $(SBFE_DEV_EFUSE_JSON)
 
 $(SBFE_DEV_EFUSE_JSON):
 	$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before default_reset values -j $@ BLK1 BLK2 FLASH_CRYPT_CNT ABS_DONE_0 MAC CODING_SCHEME
@@ -29,14 +25,14 @@ tool_check_jq:
 # Variables
 #
 
-SBFE_CMPT_DIR:=$(COMPONENT_PATH)
+SBFE_CMPT_DIR:=$(abspath $(COMPONENT_PATH)/..)
 SBFE_DEV_KEYS_DIR=$(SBFE_CMPT_DIR)/esp-sbfe-keys
 SBFE_DEV_KEYS_EXT_DIR?=
 
 #
 # Processing at target execution the result of the efuse
 #
-sbfe-dev-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
+sbfe-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
 	$(eval SBFE_DEV_MAC=$(shell jq -r '.MAC.value_hex' $< ))
 	$(eval SBFE_DEV_MAC_DIR=$(subst :,-,$(SBFE_DEV_MAC)))
 	$(eval SBFE_DEV_CODINGSCHEME=$(shell jq -r '.CODING_SCHEME.value' $<))
@@ -58,48 +54,6 @@ sbfe-dev-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
 
 	$(info Device Hardware Keys @ "$(SBFE_DEV_KEYS_DIR_FINAL)")
 
-
-#
-# SBFE check compatibility
-#
-
-.PHONY: sbfe-dev-check
-
-.ONESHELL:
-SHELL=/bin/bash
-sbfe-dev-check: sbfe-dev-info
-	if [[ $(SBFE_DEV_SECUREBOOT_SET) -eq 1 ]] && [[ -z "$(SBFE_DEV_KEYS_DIR_FINAL)" ]]; then
-		echo "Device has Secure Boot enable but not keys are available"
-		exit 1
-	fi
-	
-	# Does not support flash re-encryption, re-encryption does not work with secure boot anyway	
-	if [[ $(SBFE_DEV_ENCRYPTION_SET) -gt 0 ]] && [[ -z "$(SBFE_DEV_KEYS_DIR_FINAL)" ]]; then
-		echo "Device has Flash Encryption enable but not keys are available"
-		exit 1
-	fi
-
-
-#
-# Calling SBFE targets
-#
-
-SBFE_CMD_MAKE= + \
-	PROJECT_PATH= \
-	COMPONENT_DIRS= \
-	$(MAKE) -C $(SBFE_CMPT_DIR)/esp-sbfe-subproject/ \
-	V=$(V) \
-	BUILD_DIR_BASE=$(BUILD_DIR_BASE)/esp-sbfe \
-	TEST_COMPONENTS= \
-	TESTS_ALL= \
-	EXCLUDE_COMPONENTS=
-
-SBFE_TARGETS=sbfe-flash-app
-
-.PHONY: $(SBFE_TARGETS)
-
-$(SBFE_TARGETS): sbfe-dev-check
-	$(SBFE_CMD_MAKE) $@
 
 
 

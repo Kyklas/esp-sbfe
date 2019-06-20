@@ -5,10 +5,18 @@
 
 PROJECT_NAME := esp-sbfe-flash
 
-COMPONENTS := esptool_py esp-sbfe/esp-sbfe-flash
+$(info Make execution : restart $(MAKE_RESTARTS), level $(MAKELEVEL))
+
+# Name of component to use
+# found in the COMPONENT_DIRS
+COMPONENTS := esptool_py esp-sbfe-flash
+
+COMPONENT_DIRS = $(PROJECT_PATH) $(IDF_PATH)/components
 
 IS_BOOTLOADER_BUILD := 1
 export IS_BOOTLOADER_BUILD
 
 include $(IDF_PATH)/make/project.mk
 
+$(info COMPONENT_DIRS : $(COMPONENT_DIRS))
+$(info --- ESP SBFE Flash Makefile --- )

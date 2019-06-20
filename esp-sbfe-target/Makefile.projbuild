@@ -1,0 +1,53 @@
+# ESP32 Secure Boot & Flash Encryption target
+#
+# extends the ESP IDF to handle flashing and reflashing devices with secure boot
+# and flash encryption enabled dynamically
+#
+
+#
+# SBFE check compatibility
+#
+
+.PHONY: sbfe-dev-check
+
+.ONESHELL:
+SHELL=/bin/bash
+sbfe-flash-check: sbfe-info
+	if [[ $(SBFE_DEV_SECUREBOOT_SET) -eq 1 ]] && [[ -z "$(SBFE_DEV_KEYS_DIR_FINAL)" ]]; then
+		echo "Device has Secure Boot enable but not keys are available"
+		exit 1
+	fi
+	
+	# Does not support flash re-encryption, re-encryption does not work with secure boot anyway	
+	if [[ $(SBFE_DEV_ENCRYPTION_SET) -gt 0 ]] && [[ -z "$(SBFE_DEV_KEYS_DIR_FINAL)" ]]; then
+		echo "Device has Flash Encryption enable but not keys are available"
+		exit 1
+	fi
+
+
+#
+# Calling SBFE targets
+#
+
+SBFE_CMD_MAKE= + \
+	PROJECT_PATH= \
+	COMPONENT_DIRS= \
+	$(MAKE) -C $(SBFE_CMPT_DIR)/esp-sbfe-subproject/ \
+	V=$(V) \
+	BUILD_DIR_BASE=$(BUILD_DIR_BASE)/esp-sbfe \
+	TEST_COMPONENTS= \
+	TESTS_ALL= \
+	EXCLUDE_COMPONENTS=
+
+SBFE_FLASH_TARGETS=sbfe-flash-app
+
+.PHONY: $(SBFE_FLASH_TARGETS)
+
+$(SBFE_FLASH_TARGETS): sbfe-flash-check
+	$(SBFE_CMD_MAKE) $@
+
+
+
+
+
+
