@@ -58,7 +58,10 @@ sbfe-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
 	$(info Device Hardware Keys @ "$(SBFE_DEV_KEYS_DIR_FINAL)")
 
 
+SBFE_VAR_SB_KEY_FILENAME=secure_boot.key
+SBFE_VAR_FE_KEY_FILENAME=flash_encryption.key
 
+export SBFE_VAR_SB_KEY_FILENAME SBFE_VAR_FE_KEY_FILENAME
 
 
 

@@ -1,0 +1,18 @@
+FLH_FW_SBFE_BIN_DIR:=$(BUILD_DIR_BASE)/$(notdir $(COMPONENT_PATH))
+
+FLH_FW_APP_BIN_ENC=$(FLH_FW_SBFE_BIN_DIR)/fw_app_encrypted.bin
+
+# Firmware and Partition Table
+ifeq ($(SBFE_VAR_FLASH_ENCRYPTION),1)
+FLH_FW_DEP+=$(FLH_FW_APP_BIN_ENC)
+FLH_FW_ARGS+=$(FW_PKG_APP_OFFSET) $(FLH_FW_APP_BIN_ENC)
+else
+FLH_FW_DEP+=$(FW_APP_BIN)
+FLH_FW_ARGS+=$(FW_PKG_APP_OFFSET) $(FW_APP_BIN)
+endif
+
+$(FLH_FW_APP_BIN_ENC): $$(FW_APP_BIN) $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)
+	echo "Generating $@ from $<"
+	$(ESPSECUREPY) encrypt_flash_data \
+			-k $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME) \
+			-a $(FW_PKG_APP_OFFSET) -o $@ $<

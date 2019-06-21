@@ -5,6 +5,7 @@
 
 PROJECT_NAME := esp-sbfe-flash
 
+MAKE_RESTARTS?=
 $(info Make execution : restart $(MAKE_RESTARTS), level $(MAKELEVEL))
 
 # Name of component to use
@@ -15,6 +16,11 @@ COMPONENT_DIRS = $(PROJECT_PATH) $(IDF_PATH)/components
 
 IS_BOOTLOADER_BUILD := 1
 export IS_BOOTLOADER_BUILD
+
+
+$(foreach V,$(sort $(.VARIABLES)), \
+	$(if $(filter SBFE_VAR%, \
+	$V),$(info $V : $($V)) ))
 
 include $(IDF_PATH)/make/project.mk
 
