@@ -8,7 +8,7 @@
 
 SBFE_DEV_EFUSE_JSON=$(BUILD_DIR_BASE)/esp_sbfe_dev_efuse.json
 
-.PHONY: $(SBFE_DEV_EFUSE_JSON)
+#.PHONY: $(SBFE_DEV_EFUSE_JSON)
 
 $(SBFE_DEV_EFUSE_JSON):
 	$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before default_reset values -j $@ BLK1 BLK2 FLASH_CRYPT_CNT ABS_DONE_0 MAC CODING_SCHEME
@@ -46,16 +46,16 @@ sbfe-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
 	$(eval SBFE_DEV_SECUREBOOT_SET=$(shell jq -r '.ABS_DONE_0.value' $<))
 	
 	$(info Secure Boot & Flash Encryption Device Info )
-	$(info Device Mac $(SBFE_DEV_MAC), Device Coding $(SBFE_DEV_CODINGSCHEME))
-	$(info Device Hardware Keys Writable : $(SBFE_DEV_BLK1_WRITEABLE) $(SBFE_DEV_BLK2_WRITEABLE))
-	$(info Device Secure Boot ($(SBFE_DEV_SECUREBOOT_SET)), Flash Encryption ($(SBFE_DEV_ENCRYPTION_SET)))
+	$(info - Device Mac $(SBFE_DEV_MAC), Device Coding $(SBFE_DEV_CODINGSCHEME))
+	$(info - Device Hardware Keys Writable : $(SBFE_DEV_BLK1_WRITEABLE) $(SBFE_DEV_BLK2_WRITEABLE))
+	$(info - Device Secure Boot ($(SBFE_DEV_SECUREBOOT_SET)), Flash Encryption ($(SBFE_DEV_ENCRYPTION_SET)))
 	
 	$(foreach KEY_DIR,$(SBFE_DEV_KEYS_DIR), \
 		$(if $(SBFE_DEV_KEYS_DIR_FINAL),, \
 			$(info Searching Hardware Key in $(KEY_DIR)/$(SBFE_DEV_MAC_DIR)) \
 			$(eval SBFE_DEV_KEYS_DIR_FINAL=$(wildcard $(KEY_DIR)/$(SBFE_DEV_MAC_DIR)))))
 	
-	$(info Device Hardware Keys @ "$(SBFE_DEV_KEYS_DIR_FINAL)")
+	$(info - Device Hardware Keys @ "$(SBFE_DEV_KEYS_DIR_FINAL)")
 
 
 SBFE_VAR_SB_KEY_FILENAME=secure_boot.key

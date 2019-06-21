@@ -18,9 +18,14 @@ IS_BOOTLOADER_BUILD := 1
 export IS_BOOTLOADER_BUILD
 
 
+# The following report warning, but should not be defined
+#CONFIG_SECURE_BOOT_BUILD_SIGNED_BINARIES?=
+#CONFIG_SECURE_BOOT_ENABLED?=
+
+
 $(foreach V,$(sort $(.VARIABLES)), \
 	$(if $(filter SBFE_VAR%, \
-	$V),$(info $V : $($V)) ))
+	$V),$(info - $V : $($V)) ))
 
 include $(IDF_PATH)/make/project.mk
 

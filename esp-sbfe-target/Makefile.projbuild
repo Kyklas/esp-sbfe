@@ -24,7 +24,6 @@ sbfe-flash-check: sbfe-info
 		exit 1
 	fi
 
-
 #
 # Calling SBFE targets
 #
@@ -44,13 +43,18 @@ SBFE_CMD_MAKE= + \
 
 SBFE_FLASH_TARGETS=sbfe-pjr sbfe-flash-app
 
-.PHONY: $(SBFE_FLASH_TARGETS)
+.PHONY: $(SBFE_FLASH_TARGETS) sbfe-export
 
-$(SBFE_FLASH_TARGETS): sbfe-flash-check
+# Exporting variable to subproject
+sbfe-export:
+	$(eval $(foreach V,$(sort $(.VARIABLES)), \
+		$(if $(filter SBFE_VAR%,$V), export $V )))
+
+$(SBFE_FLASH_TARGETS): sbfe-flash-check sbfe-export
 	$(SBFE_CMD_MAKE) $@
 
 
-
+include $(COMPONENT_PATH)/../esp-sbfe-common/esp-sbfe-function.mk
 
 
 
