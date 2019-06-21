@@ -13,6 +13,7 @@ SBFE_VAR_BL_OFFSET=
 # For other binaries to process
 # declaration is made via templates
 SBFE_VAR_BIN_IDX?=
+SBFE_VAR_FLSH_IDX?=
 
 ifeq ($(MAKELEVEL),0)
 
@@ -38,19 +39,40 @@ sbfe-flash-$1: sbfe-flash-check sbfe-export $(SBFE_VAR_BIN_$(1)_BIN)
 	$$(SBFE_CMD_MAKE) $$@
 endef
 
+#
+# Help to define SBFE combined binary to flash
+#
+define sbfe-declare-flash-target
+$(info SBFE declaration of flash target $1)
+$(eval SBFE_VAR_FLSH_IDX+=$1)
+$(eval SBFE_VAR_FLSH_$(1)_TARGET=$1)
+$(eval SBFE_VAR_FLSH_$(1)_BIN_IDX=$2)
+$(call sbfe-declare-target-flash-target,$1)
+endef
+
+define sbfe-declare-target-flash-target
+$(info SBFE declaration of binary target $1)
+sbfe-flash-$1: sbfe-flash-check sbfe-export $(foreach bin,$(SBFE_VAR_FLSH_$(1)_BIN_IDX), $(SBFE_VAR_BIN_$(bin)_BIN))
+	$$(SBFE_CMD_MAKE) $$@
+endef
+
 else # Make level is 0
 
-SBFE_FLH_DRYRUN=echo
+SBFE_FLH_DRYRUN=echo -e "\t\t"
 
 define sbfe-declare-target
+ifneq ($(SBFE_VAR_BIN_$(1)_BIN),)
+ifneq ($(SBFE_VAR_BIN_$(1)_OFFSET),)
 $(info SBFE declaration of binary target $1)
 ifeq ($(SBFE_VAR_BIN_$(1)_ENC).$(SBFE_VAR_FLASH_ENCRYPTION),1.1)
 # Flashing with encrypted binary
 
 $(eval SBFE_FLSH_BIN_$(1)_BIN_ENC=$(basename $(SBFE_VAR_BIN_$(1)_BIN))-encrypted.bin)
 
+.INTERMEDIATE: $(SBFE_FLSH_BIN_$(1)_BIN_ENC)
+
 $(SBFE_FLSH_BIN_$(1)_BIN_ENC): $(SBFE_VAR_BIN_$(1)_BIN) $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)
-	echo "Generating $$@ from $$<"
+	echo "Generating $$(notdir $$@) from $$(notdir $$<)"
 	$(SBFE_FLH_DRYRUN) $(ESPSECUREPY) encrypt_flash_data \
 			-k $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME) \
 			-a $(SBFE_VAR_BIN_$(1)_OFFSET) -o $$@ $$<
@@ -64,12 +86,38 @@ SBFE_FLSH_BIN_$(1)_ARG=$(SBFE_VAR_BIN_$(1)_OFFSET) $(SBFE_VAR_BIN_$(1)_BIN)
 endif
 
 sbfe-flash-$1: $$(SBFE_FLSH_BIN_$(1)_DEP)
-	echo Processing Flashing \'$1\' : $$@ $$<
-	$(call sbfe-print-list, $$<)
-	$(call sbfe-print-list, $$(SBFE_FLSH_BIN_$(1)_ARG))
+	echo Processing Flashing \'$1\' : $$@
+	$$(call sbfe-print-list, $$^)
+	$$(call sbfe-print-list, $$(SBFE_FLSH_BIN_$(1)_ARG))
 	$(SBFE_FLH_DRYRUN) $(ESPTOOLPY_WRITE_FLASH) $$(SBFE_FLSH_BIN_$(1)_ARG)
+endif # SBFE_VAR_BIN_$(1)_OFFSET is not null
+endif # SBFE_VAR_BIN_$(1)_BIN is not null
 	
+endef # sbfe-declare-target
+
+define sbfe-declare-flash-target
+$(info SBFE declaration of flash target $1)
+$(info - TGT - $(SBFE_VAR_FLSH_$(1)_TARGET))
+$(info - IDX - $(SBFE_VAR_FLSH_$(1)_BIN_IDX))
+$(call sbfe-declare-flash-target-def,$1,$(SBFE_VAR_FLSH_$(1)_BIN_IDX))
 endef
+
+#
+# $1 name
+# $2 list of binary target
+#
+define sbfe-declare-flash-target-def
+
+SBFE_FLSH_TGT_$(1)_DEP=$(foreach bin,$2, $(SBFE_FLSH_BIN_$(bin)_DEP) )
+SBFE_FLSH_TGT_$(1)_ARG=$(foreach bin,$2, $(SBFE_FLSH_BIN_$(bin)_ARG) )
+
+sbfe-flash-$1: $$(SBFE_FLSH_TGT_$(1)_DEP)
+	echo Processing Flash Target \'$1\' : $$@
+	$$(call sbfe-print-list, $$^)
+	$$(call sbfe-print-list, $$(SBFE_FLSH_TGT_$(1)_ARG))
+	$(SBFE_FLH_DRYRUN) $(ESPTOOLPY_WRITE_FLASH) $$(SBFE_FLSH_TGT_$(1)_ARG)
+
+endef # sbfe-declare-flash-target
 
 endif # make level is more than 0
 
@@ -84,6 +132,7 @@ ifeq ($(MAKELEVEL),0)
 $(eval $(call sbfe-declare-binary,test1,mybin,myoffset,1))
 $(eval $(call sbfe-declare-binary,test0,mybin,myoffset,0))
 $(eval $(call sbfe-declare-binary,test,mybin,myoffset,))
+
 
 endif
 

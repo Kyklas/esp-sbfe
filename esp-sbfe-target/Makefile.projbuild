@@ -47,7 +47,7 @@ SBFE_CMD_MAKE= + \
 	TESTS_ALL= \
 	EXCLUDE_COMPONENTS=
 
-SBFE_FLASH_TARGETS=sbfe-pjr sbfe-flash-app
+SBFE_FLASH_TARGETS=sbfe-pjr sbfe-flash
 
 .PHONY: $(SBFE_FLASH_TARGETS) sbfe-export
 

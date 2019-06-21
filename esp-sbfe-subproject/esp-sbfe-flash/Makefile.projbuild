@@ -10,9 +10,10 @@ sbfe-pjr:
 	echo $(FLH_FW_DEP)
 	echo $(FLH_FW_ARGS)
 
-sbfe-flash-app:
-	echo "Target to flash app with SBFE support"
-
 include $(ESP_SBFE_FUNCTION_MK)
 
 $(foreach bin,$(SBFE_VAR_BIN_IDX),$(eval $(call sbfe-declare-target,$(bin))))
+
+$(foreach flhtgt,$(SBFE_VAR_FLSH_IDX),$(eval $(call sbfe-declare-flash-target,$(flhtgt))))
+
+#$(eval $(call sbfe-declare-flash-target-def,all, $(SBFE_VAR_BIN_IDX)))
