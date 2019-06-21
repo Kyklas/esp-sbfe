@@ -26,8 +26,12 @@ tool_check_jq:
 #
 
 SBFE_CMPT_DIR:=$(abspath $(COMPONENT_PATH)/..)
-SBFE_DEV_KEYS_DIR=$(SBFE_CMPT_DIR)/esp-sbfe-keys
+
 SBFE_DEV_KEYS_EXT_DIR?=
+SBFE_DEV_KEYS_DIR?=
+SBFE_DEV_KEYS_DIR+=$(SBFE_CMPT_DIR)/esp-sbfe-keys $(SBFE_DEV_KEYS_EXT_DIR)
+
+SBFE_DEV_KEYS_DIR_FINAL=
 
 #
 # Processing at target execution the result of the efuse
@@ -40,18 +44,17 @@ sbfe-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
 	$(eval SBFE_DEV_BLK2_WRITEABLE=$(shell jq -r '.BLK2.writable' $<))
 	$(eval SBFE_DEV_ENCRYPTION_SET=$(shell jq -r '.FLASH_CRYPT_CNT.value' $<))
 	$(eval SBFE_DEV_SECUREBOOT_SET=$(shell jq -r '.ABS_DONE_0.value' $<))
-
-	$(eval SBFE_DEV_KEYS_DIR_MAC_LOCAL=$(wildcard $(SBFE_DEV_KEYS_DIR)/$(SBFE_DEV_MAC_DIR)))
-	$(eval SBFE_DEV_KEYS_DIR_MAC_EXT=$(wildcard $(SBFE_DEV_KEYS_EXT_DIR)/$(SBFE_DEV_MAC_DIR)))
-	
-	$(eval SBFE_DEV_KEYS_DIR_FINAL=$(if $(SBFE_DEV_KEYS_DIR_MAC_LOCAL),\
-		$(SBFE_DEV_KEYS_DIR_MAC_LOCAL),$(SBFE_DEV_KEYS_DIR_MAC_EXT)))
 	
 	$(info Secure Boot & Flash Encryption Device Info )
 	$(info Device Mac $(SBFE_DEV_MAC), Device Coding $(SBFE_DEV_CODINGSCHEME))
 	$(info Device Hardware Keys Writable : $(SBFE_DEV_BLK1_WRITEABLE) $(SBFE_DEV_BLK2_WRITEABLE))
 	$(info Device Secure Boot ($(SBFE_DEV_SECUREBOOT_SET)), Flash Encryption ($(SBFE_DEV_ENCRYPTION_SET)))
-
+	
+	$(foreach KEY_DIR,$(SBFE_DEV_KEYS_DIR), \
+		$(if $(SBFE_DEV_KEYS_DIR_FINAL),, \
+			$(info Searching Hardware Key in $(KEY_DIR)/$(SBFE_DEV_MAC_DIR)) \
+			$(eval SBFE_DEV_KEYS_DIR_FINAL=$(wildcard $(KEY_DIR)/$(SBFE_DEV_MAC_DIR)))))
+	
 	$(info Device Hardware Keys @ "$(SBFE_DEV_KEYS_DIR_FINAL)")
 
 
