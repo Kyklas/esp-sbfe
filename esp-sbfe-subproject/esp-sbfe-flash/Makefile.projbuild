@@ -4,7 +4,7 @@
 # and flash encryption enabled dynamically
 #
 
-include $(wildcard $(COMPONENT_PATH)/sbfe_*.mk)
+#include $(wildcard $(COMPONENT_PATH)/sbfe_*.mk)
 
 sbfe-pjr:
 	echo $(FLH_FW_DEP)
@@ -13,4 +13,6 @@ sbfe-pjr:
 sbfe-flash-app:
 	echo "Target to flash app with SBFE support"
 
+include $(ESP_SBFE_FUNCTION_MK)
 
+$(foreach bin,$(SBFE_VAR_BIN_IDX),$(eval $(call sbfe-declare-target,$(bin))))

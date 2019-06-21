@@ -24,6 +24,12 @@ sbfe-flash-check: sbfe-info
 		exit 1
 	fi
 
+
+ESP_SBFE_FUNCTION_MK:=$(COMPONENT_PATH)/../esp-sbfe-common/esp-sbfe-function.mk
+include $(ESP_SBFE_FUNCTION_MK)
+
+export ESP_SBFE_FUNCTION_MK
+
 #
 # Calling SBFE targets
 #
@@ -53,8 +59,6 @@ sbfe-export:
 $(SBFE_FLASH_TARGETS): sbfe-flash-check sbfe-export
 	$(SBFE_CMD_MAKE) $@
 
-
-include $(COMPONENT_PATH)/../esp-sbfe-common/esp-sbfe-function.mk
 
 
 
