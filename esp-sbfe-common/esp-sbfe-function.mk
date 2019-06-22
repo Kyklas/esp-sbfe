@@ -4,6 +4,16 @@
 
 $(info Definition of SBFE Function : $(MAKELEVEL))
 
+SBFE_FLH_DRYRUN=
+ifeq ($(SBFE_VAR_DRY_RUN),1)
+SBFE_FLH_DRYRUN=echo "\t\t"
+endif
+
+SBFE_STYLE_CLEAR:=$(shell printf `tput sgr0`)
+SBFE_STYLE_TARGET:=$(shell printf `tput setaf 6;tput bold`)
+SBFE_STYLE_DEP:=$(shell printf `tput setaf 2;tput bold`)
+SBFE_STYLE_KEY:=$(shell printf `tput setaf 1;tput bold`)
+
 # Variable for the bootloader
 # since the bootloader has secure boot
 # it has dedicated variable
@@ -64,8 +74,6 @@ endef
 
 else # Make level is 0
 
-SBFE_FLH_DRYRUN=echo -e "\t\t"
-
 define sbfe-declare-target
 ifneq ($(SBFE_VAR_BIN_$(1)_BIN),)
 ifneq ($(SBFE_VAR_BIN_$(1)_OFFSET),)
@@ -81,8 +89,8 @@ $(eval SBFE_FLSH_BIN_$(1)_BIN_SECBT=$(basename $(SBFE_VAR_BIN_$(1)_BIN))-digest.
 .INTERMEDIATE: $(SBFE_FLSH_BIN_$(1)_BIN_SECBT) 
 
 $(SBFE_FLSH_BIN_$(1)_BIN_SECBT) : $(SBFE_VAR_BIN_$(1)_BIN_ORJ) $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME)
-	echo "Generating $$(notdir $$@) from $$(notdir $$<)"
-	echo "Secure Boot Key : $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME)"
+	echo "Generating $(SBFE_STYLE_TARGET)$$(notdir $$@)$(SBFE_STYLE_CLEAR) from $(SBFE_STYLE_DEP)$$(notdir $$<)$(SBFE_STYLE_CLEAR)"
+	echo "Secure Boot Key : $(SBFE_STYLE_KEY)$(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME)$(SBFE_STYLE_CLEAR)"
 	$(SBFE_FLH_DRYRUN)  $(ESPSECUREPY) digest_secure_bootloader \
 				-k $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME) \
 				-o $$@ $$<
@@ -106,8 +114,8 @@ $(eval SBFE_FLSH_BIN_$(1)_BIN_ENC=$(basename $(SBFE_VAR_BIN_$(1)_BIN))-encrypted
 .INTERMEDIATE: $(SBFE_FLSH_BIN_$(1)_BIN_ENC)
 
 $(SBFE_FLSH_BIN_$(1)_BIN_ENC): $(SBFE_VAR_BIN_$(1)_BIN) $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)
-	echo "Generating $$(notdir $$@) from $$(notdir $$<)"
-	echo "Encryption Key : $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)"
+	echo "Generating $(SBFE_STYLE_TARGET)$$(notdir $$@)$(SBFE_STYLE_CLEAR) from $(SBFE_STYLE_DEP)$$(notdir $$<)$(SBFE_STYLE_CLEAR)"
+	echo "Encryption Key : $(SBFE_STYLE_KEY)$(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)$(SBFE_STYLE_CLEAR)"
 	$(SBFE_FLH_DRYRUN) $(ESPSECUREPY) encrypt_flash_data \
 			-k $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME) \
 			-a $(SBFE_VAR_BIN_$(1)_OFFSET) -o $$@ $$<
@@ -160,18 +168,5 @@ define sbfe-print-list
 	printf "$(foreach v,$1,\t$(v)\n)\n"
 endef
 
-
-# for testing
-ifeq ($(MAKELEVEL),0)
-	
-$(eval $(call sbfe-declare-binary,test1,mybin,myoffset,1))
-$(eval $(call sbfe-declare-binary,test0,mybin,myoffset,0))
-$(eval $(call sbfe-declare-binary,test,mybin,myoffset,))
-
-
-endif
-
-mybin:
-	echo "Bummy Binary"
 
 

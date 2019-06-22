@@ -8,7 +8,7 @@
 
 SBFE_DEV_EFUSE_JSON=$(BUILD_DIR_BASE)/esp_sbfe_dev_efuse.json
 
-#.PHONY: $(SBFE_DEV_EFUSE_JSON)
+.PHONY: $(SBFE_DEV_EFUSE_JSON)
 
 $(SBFE_DEV_EFUSE_JSON):
 	$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before default_reset values -j $@ BLK1 BLK2 FLASH_CRYPT_CNT ABS_DONE_0 MAC CODING_SCHEME

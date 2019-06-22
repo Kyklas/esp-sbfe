@@ -59,6 +59,28 @@ sbfe-export:
 $(SBFE_FLASH_TARGETS): sbfe-flash-check sbfe-export
 	$(SBFE_CMD_MAKE) $@
 
+# Testing
 
+sbfe-test-dep: sbfe-export sbfe-flash-all-dep
+	$(eval SBFE_DEV_KEYS_DIR_FINAL=$(abspath esp-sbfe-components/esp-sbfe-keys/80-7d-3a-81-ed-08))
+	$(eval export SBFE_VAR_DRY_RUN=1)
 
+sbfe-test-none: sbfe-test-dep
+	$(eval SBFE_DEV_SECUREBOOT_SET=0)
+	$(eval SBFE_DEV_ENCRYPTION_SET=0)
+	$(SBFE_CMD_MAKE) sbfe-flash-all
 
+sbfe-test-fe: sbfe-test-dep
+	$(eval SBFE_DEV_SECUREBOOT_SET=0)
+	$(eval SBFE_DEV_ENCRYPTION_SET=1)
+	$(SBFE_CMD_MAKE) sbfe-flash-all
+
+sbfe-test-sb: sbfe-test-dep
+	$(eval SBFE_DEV_SECUREBOOT_SET=1)
+	$(eval SBFE_DEV_ENCRYPTION_SET=0)
+	$(SBFE_CMD_MAKE) sbfe-flash-all
+
+sbfe-test-sbfe: sbfe-test-dep
+	$(eval SBFE_DEV_SECUREBOOT_SET=1)
+	$(eval SBFE_DEV_ENCRYPTION_SET=1)
+	$(SBFE_CMD_MAKE) sbfe-flash-all
