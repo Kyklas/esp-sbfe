@@ -30,6 +30,7 @@ $(eval SBFE_VAR_BIN_IDX+=$1)
 $(eval SBFE_VAR_BIN_$(1)_BIN=$2)
 $(eval SBFE_VAR_BIN_$(1)_OFFSET=$3)
 $(eval SBFE_VAR_BIN_$(1)_ENC=$4)
+$(eval SBFE_VAR_BIN_$(1)_SECBT=$5)
 $(call sbfe-declare-target,$1)
 endef
 
@@ -52,7 +53,12 @@ endef
 
 define sbfe-declare-target-flash-target
 $(info SBFE declaration of binary target $1)
-sbfe-flash-$1: sbfe-flash-check sbfe-export $(foreach bin,$(SBFE_VAR_FLSH_$(1)_BIN_IDX), $(SBFE_VAR_BIN_$(bin)_BIN))
+
+sbfe-flash-$1-dep: $(foreach bin,$(SBFE_VAR_FLSH_$(1)_BIN_IDX), $(SBFE_VAR_BIN_$(bin)_BIN))
+	echo Dependency :
+	$$(call sbfe-print-list, $$^)
+
+sbfe-flash-$1: sbfe-flash-check sbfe-export sbfe-flash-$1-dep
 	$$(SBFE_CMD_MAKE) $$@
 endef
 
@@ -63,7 +69,35 @@ SBFE_FLH_DRYRUN=echo -e "\t\t"
 define sbfe-declare-target
 ifneq ($(SBFE_VAR_BIN_$(1)_BIN),)
 ifneq ($(SBFE_VAR_BIN_$(1)_OFFSET),)
+
 $(info SBFE declaration of binary target $1)
+
+ifeq ($(SBFE_VAR_BIN_$(1)_SECBT).$(SBFE_VAR_SECURE_BOOT),1.1)
+# Save original filename
+$(eval SBFE_VAR_BIN_$(1)_BIN_ORJ:=$(SBFE_VAR_BIN_$(1)_BIN))
+
+$(eval SBFE_FLSH_BIN_$(1)_BIN_SECBT=$(basename $(SBFE_VAR_BIN_$(1)_BIN))-digest.bin)
+
+.INTERMEDIATE: $(SBFE_FLSH_BIN_$(1)_BIN_SECBT) 
+
+$(SBFE_FLSH_BIN_$(1)_BIN_SECBT) : $(SBFE_VAR_BIN_$(1)_BIN_ORJ) $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME)
+	echo "Generating $$(notdir $$@) from $$(notdir $$<)"
+	echo "Secure Boot Key : $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME)"
+	$(SBFE_FLH_DRYRUN)  $(ESPSECUREPY) digest_secure_bootloader \
+				-k $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME) \
+				-o $$@ $$<
+
+# set to the new secure digiest
+# the variable does not change but it's value does
+# pointing to another file
+$(if $(filter $(SBFE_VAR_BIN_$(1)_SECBT).$(SBFE_VAR_SECURE_BOOT),1.1), \
+	$(eval SBFE_VAR_BIN_$(1)_BIN:=$(SBFE_FLSH_BIN_$(1)_BIN_SECBT)))
+# Changing offset
+$(if $(filter $(SBFE_VAR_BIN_$(1)_SECBT).$(SBFE_VAR_SECURE_BOOT),1.1), \
+	$(eval SBFE_VAR_BIN_$(1)_OFFSET:=0))
+
+endif
+
 ifeq ($(SBFE_VAR_BIN_$(1)_ENC).$(SBFE_VAR_FLASH_ENCRYPTION),1.1)
 # Flashing with encrypted binary
 
@@ -73,6 +107,7 @@ $(eval SBFE_FLSH_BIN_$(1)_BIN_ENC=$(basename $(SBFE_VAR_BIN_$(1)_BIN))-encrypted
 
 $(SBFE_FLSH_BIN_$(1)_BIN_ENC): $(SBFE_VAR_BIN_$(1)_BIN) $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)
 	echo "Generating $$(notdir $$@) from $$(notdir $$<)"
+	echo "Encryption Key : $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)"
 	$(SBFE_FLH_DRYRUN) $(ESPSECUREPY) encrypt_flash_data \
 			-k $(SBFE_VAR_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME) \
 			-a $(SBFE_VAR_BIN_$(1)_OFFSET) -o $$@ $$<

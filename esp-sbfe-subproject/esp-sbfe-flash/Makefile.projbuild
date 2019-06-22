@@ -7,8 +7,7 @@
 #include $(wildcard $(COMPONENT_PATH)/sbfe_*.mk)
 
 sbfe-pjr:
-	echo $(FLH_FW_DEP)
-	echo $(FLH_FW_ARGS)
+	echo "Test target for SBFE Flash Subproject"
 
 include $(ESP_SBFE_FUNCTION_MK)
 
