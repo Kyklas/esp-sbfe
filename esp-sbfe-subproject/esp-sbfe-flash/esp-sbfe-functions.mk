@@ -8,11 +8,6 @@ ifeq ($(SBFE_VAR_DRY_RUN),1)
 SBFE_FLH_DRYRUN=echo "\t\t"
 endif
 
-SBFE_STYLE_CLEAR:=$(shell printf `tput sgr0`)
-SBFE_STYLE_TARGET:=$(shell printf `tput setaf 6;tput bold`)
-SBFE_STYLE_DEP:=$(shell printf `tput setaf 2;tput bold`)
-SBFE_STYLE_KEY:=$(shell printf `tput setaf 1;tput bold`)
-
 # Set the binary and flash index list empty if not defined
 SBFE_VAR_BIN_IDX?=
 SBFE_VAR_FLSH_IDX?=
