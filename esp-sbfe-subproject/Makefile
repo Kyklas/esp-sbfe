@@ -22,10 +22,11 @@ export IS_BOOTLOADER_BUILD
 #CONFIG_SECURE_BOOT_BUILD_SIGNED_BINARIES?=
 #CONFIG_SECURE_BOOT_ENABLED?=
 
-
+ifneq ($(V),)
 $(foreach V,$(sort $(.VARIABLES)), \
 	$(if $(filter SBFE_VAR%, \
 	$V),$(info - $V : $($V)) ))
+endif
 
 include $(IDF_PATH)/make/project.mk
 
