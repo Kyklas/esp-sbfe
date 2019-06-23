@@ -4,26 +4,6 @@
 # and flash encryption enabled dynamically
 #
 
-#
-# SBFE check compatibility
-#
-
-.PHONY: sbfe-dev-check
-
-.ONESHELL:
-SHELL=/bin/bash
-sbfe-flash-check: sbfe-info
-	if [[ $(SBFE_DEV_SECUREBOOT_SET) -eq 1 ]] && [[ -z "$(SBFE_DEV_KEYS_DIR_FINAL)" ]]; then
-		echo "Device has Secure Boot enable but not keys are available"
-		exit 1
-	fi
-	
-	# Does not support flash re-encryption, re-encryption does not work with secure boot anyway	
-	if [[ $(SBFE_DEV_ENCRYPTION_SET) -gt 0 ]] && [[ -z "$(SBFE_DEV_KEYS_DIR_FINAL)" ]]; then
-		echo "Device has Flash Encryption enable but not keys are available"
-		exit 1
-	fi
-
 include $(COMPONENT_PATH)/../esp-sbfe-common/esp-sbfe-common.mk
 include $(COMPONENT_PATH)/esp-sbfe-declarations.mk
 
@@ -55,6 +35,13 @@ sbfe-export:
 
 $(SBFE_FLASH_TARGETS): sbfe-flash-check sbfe-export
 	$(SBFE_CMD_MAKE) $@
+
+
+#
+SBFE_FLASH_CHECK_DEP?=
+.SECONDEXPANSION:
+sbfe-flash-check: sbfe-check-compat $$(SBFE_FLASH_CHECK_DEP)
+
 
 # Testing
 

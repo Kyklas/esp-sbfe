@@ -1,0 +1,68 @@
+# ESP32 Secure Boot & Flash Encryption Checks
+#
+#
+
+#
+# SBFE check compatibility
+# If device is secure, keys are needed, else fails
+#
+
+.PHONY: sbfe-check-compat
+.ONESHELL:
+SHELL=/bin/bash
+sbfe-check-compat: sbfe-info
+	if [[ $(SBFE_DEV_SECUREBOOT_SET) -eq 1 ]] && [[ -z "$(SBFE_DEV_KEYS_DIR_FINAL)" ]]; then
+		echo "FAILED : Device has Secure Boot enable but not keys are available"
+		exit 1
+	fi
+	
+	# Does not support flash re-encryption, re-encryption does not work with secure boot anyway	
+	if [[ $(SBFE_DEV_ENCRYPTION_SET) -gt 0 ]] && [[ -z "$(SBFE_DEV_KEYS_DIR_FINAL)" ]]; then
+		echo "FAILED : Device has Flash Encryption enable but not keys are available"
+		exit 1
+	fi
+	
+	echo "Device is compatible with SBFE"
+
+#
+# Fails if device has security enabled
+#
+.PHONY: sbfe-check-non-secure
+.ONESHELL:
+SHELL=/bin/bash
+sbfe-check-non-secure: sbfe-info
+	if [[ $(SBFE_DEV_SECUREBOOT_SET) -eq 1 ]]; then
+		echo "FAILED : Device has Secure Boot enable"
+		exit 1
+	fi
+	
+	# Does not support flash re-encryption, re-encryption does not work with secure boot anyway	
+	if [[ $(SBFE_DEV_ENCRYPTION_SET) -gt 0 ]]; then
+		echo "FAILED : Device has Flash Encryption enable"
+		exit 1
+	fi
+	
+	echo "Device is Non-Secure"
+
+#
+# Fails if device does not have known keys
+#
+
+.PHONY: sbfe-check-known-keys
+.ONESHELL:
+SHELL=/bin/bash
+sbfe-check-known-keys: sbfe-info
+	if [[ "$(SBFE_DEV_BLK1_WRITEABLE)" = "true" ]] || [[  "$(SBFE_DEV_BLK2_WRITEABLE)" = "true" ]]; then
+		echo "FAILED : Device has writable security keys"
+		exit 1
+	fi
+	if [[ -z "$(SBFE_DEV_KEYS_DIR_FINAL)" ]]; then
+		echo "FAILED : Device Keys directory not found"
+		exit 1
+	fi
+	
+	echo "Device has known keys, locked"
+	
+	
+	
+	
