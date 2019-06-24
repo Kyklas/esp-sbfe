@@ -8,7 +8,9 @@
 
 SBFE_DEV_EFUSE_JSON=$(BUILD_DIR_BASE)/esp_sbfe_dev_efuse.json
 
+ifneq ($(SBFE_DEV_SKIP_READ_DEV),1)
 .PHONY: $(SBFE_DEV_EFUSE_JSON)
+endif
 
 $(SBFE_DEV_EFUSE_JSON):
 	$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before default_reset values -j $@ BLK1 BLK2 FLASH_CRYPT_CNT ABS_DONE_0 MAC CODING_SCHEME
@@ -42,6 +44,10 @@ sbfe-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
 	$(eval SBFE_DEV_CODINGSCHEME=$(shell jq -r '.CODING_SCHEME.value' $<))
 	$(eval SBFE_DEV_BLK1_WRITEABLE=$(shell jq -r '.BLK1.writable' $<))
 	$(eval SBFE_DEV_BLK2_WRITEABLE=$(shell jq -r '.BLK2.writable' $<))
+	$(eval SBFE_DEV_BLK1_READABLE=$(shell jq -r '.BLK1.readable' $<))
+	$(eval SBFE_DEV_BLK2_READABLE=$(shell jq -r '.BLK2.readable' $<))
+	$(eval SBFE_DEV_BLK1=$(shell jq -r '.BLK1.value' $<))
+	$(eval SBFE_DEV_BLK2=$(shell jq -r '.BLK2.value' $<))
 	$(eval SBFE_DEV_ENCRYPTION_SET=$(shell jq -r '.FLASH_CRYPT_CNT.value' $<))
 	$(eval SBFE_DEV_SECUREBOOT_SET=$(shell jq -r '.ABS_DONE_0.value' $<))
 	

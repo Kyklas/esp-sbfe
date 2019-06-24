@@ -6,11 +6,12 @@
 PROJECT_NAME := esp-sbfe-flash
 
 MAKE_RESTARTS?=
+$(info --------------- SBFE Subproject ---------------)
 $(info Make execution : restart $(MAKE_RESTARTS), level $(MAKELEVEL))
 
 # Name of component to use
 # found in the COMPONENT_DIRS
-COMPONENTS := esptool_py esp-sbfe-flash
+COMPONENTS := esptool_py esp-sbfe-flash esp-sbfe-burn
 
 COMPONENT_DIRS = $(PROJECT_PATH) $(IDF_PATH)/components
 
@@ -27,6 +28,16 @@ $(foreach V,$(sort $(.VARIABLES)), \
 	$(if $(filter SBFE_VAR%, \
 	$V),$(info - $V : $($V)) ))
 endif
+
+
+SBFE_VAR_DRY_RUN?=
+SBFE_FLH_DRYRUN=
+ifneq ($(SBFE_VAR_DRY_RUN),)
+$(info --------------- SBFE Processing in Dry Run ---------------)
+SBFE_FLH_DRYRUN=echo "\t\t"
+endif
+
+include ../esp-sbfe-common/esp-sbfe-common.mk
 
 include $(IDF_PATH)/make/project.mk
 

@@ -9,7 +9,6 @@
 sbfe-pjr:
 	echo "Test target for SBFE Flash Subproject"
 
-include $(COMPONENT_PATH)/../../esp-sbfe-common/esp-sbfe-common.mk
 include $(COMPONENT_PATH)/esp-sbfe-functions.mk
 
 $(foreach bin,$(SBFE_VAR_BIN_IDX),$(eval $(call sbfe-declare-binary-target,$(bin))))

@@ -2,12 +2,6 @@
 # ESP Secure Boot & Flash Encryption functions
 #
 
-SBFE_VAR_DRY_RUN?=
-SBFE_FLH_DRYRUN=
-ifeq ($(SBFE_VAR_DRY_RUN),1)
-SBFE_FLH_DRYRUN=echo "\t\t"
-endif
-
 # Set the binary and flash index list empty if not defined
 SBFE_VAR_BIN_IDX?=
 SBFE_VAR_FLSH_IDX?=

@@ -24,23 +24,56 @@ SBFE_CMD_MAKE= + \
 	TESTS_ALL= \
 	EXCLUDE_COMPONENTS=
 
-SBFE_FLASH_TARGETS=sbfe-pjr
 
-.PHONY: $(SBFE_FLASH_TARGETS) sbfe-export
+
+.PHONY: sbfe-pjr sbfe-export
 
 # Exporting variable to subproject
 sbfe-export:
 	$(eval $(foreach V,$(sort $(.VARIABLES)), \
 		$(if $(filter SBFE_VAR%,$V), export $V )))
 
-$(SBFE_FLASH_TARGETS): sbfe-flash-check sbfe-export
+sbfe-pjr: sbfe-export
 	$(SBFE_CMD_MAKE) $@
-
 
 #
 SBFE_FLASH_CHECK_DEP?=
 .SECONDEXPANSION:
 sbfe-flash-check: sbfe-check-compat $$(SBFE_FLASH_CHECK_DEP)
+
+
+#
+# SBFE Burn Key
+#
+
+# default directory to save key 
+SBFE_BURN_CMPT_KEY_DIR:=$(abspath $(COMPONENT_PATH)/../esp-sbfe-keys)
+# can be overwriten
+SBFE_BURN_KEY_DIR?=$(SBFE_BURN_CMPT_KEY_DIR)
+# Export to subproject
+SBFE_VAR_BURN_KEY_DIR=$(SBFE_BURN_KEY_DIR)/$(SBFE_DEV_MAC_DIR)
+
+SBFE_BURN_TARGETS=sbfe-burn sbfe-burn-sb sbfe-burn-fe
+
+.PHONY: $(SBFE_BURN_TARGETS)
+
+sbfe-burnable: sbfe-info
+	$(eval SBFE_DEV_BLK1_BIT_SET=false)
+	$(foreach byte,$(SBFE_DEV_BLK1),$(if $(filter-out $(byte),00),$(eval SBFE_DEV_BLK1_BIT_SET=true)))
+	$(eval SBFE_DEV_BLK2_BIT_SET=false)
+	$(foreach byte,$(SBFE_DEV_BLK2),$(if $(filter-out $(byte),00),$(eval SBFE_DEV_BLK2_BIT_SET=true)))
+	
+	# If BLKx is writable and readable and not bit are set, then can burn
+	$(if $(filter $(SBFE_DEV_BLK1_WRITEABLE).$(SBFE_DEV_BLK1_READABLE).$(SBFE_DEV_BLK1_BIT_SET),true.true.false),\
+		$(eval export SBFE_VAR_BLK1_BURNABLE=1))
+	$(if $(filter $(SBFE_DEV_BLK2_WRITEABLE).$(SBFE_DEV_BLK2_READABLE).$(SBFE_DEV_BLK2_BIT_SET),true.true.false),\
+		$(eval export SBFE_VAR_BLK2_BURNABLE=1))
+	
+	$(eval SBFE_VAR_CODINGSCHEME=$(SBFE_DEV_CODINGSCHEME))
+	
+	
+$(SBFE_BURN_TARGETS): sbfe-burnable sbfe-export
+	$(SBFE_CMD_MAKE) $@
 
 
 # Testing

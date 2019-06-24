@@ -2,10 +2,6 @@
 #
 #
 
-define sbfe_notify
-	printf "$(SBFE_STYLE_NOTIFY)\n\t$1$(SBFE_STYLE_CLEAR)\n\n"
-endef
-
 #
 # SBFE check compatibility
 # If device is secure, keys are needed, else fails
