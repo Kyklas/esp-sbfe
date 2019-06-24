@@ -2,6 +2,8 @@
 #
 #
 
+include $(COMPONENT_PATH)/../esp-sbfe-common/esp-sbfe-common.mk
+
 #
 # SBFE check compatibility
 # If device is secure, keys are needed, else fails

@@ -63,6 +63,21 @@ sbfe-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
 	
 	$(info - Device Hardware Keys @ "$(SBFE_DEV_KEYS_DIR_FINAL)")
 
+sbfe-burnable: sbfe-info
+	$(eval SBFE_DEV_BLK1_BIT_SET=false)
+	$(foreach byte,$(SBFE_DEV_BLK1),$(if $(filter-out $(byte),00),$(eval SBFE_DEV_BLK1_BIT_SET=true)))
+	$(eval SBFE_DEV_BLK2_BIT_SET=false)
+	$(foreach byte,$(SBFE_DEV_BLK2),$(if $(filter-out $(byte),00),$(eval SBFE_DEV_BLK2_BIT_SET=true)))
+	
+	$(eval SBFE_VAR_BLK1_BURNABLE=0)
+	$(eval SBFE_VAR_BLK2_BURNABLE=0)
+	# If BLKx is writable and readable and not bit are set, then can burn
+	$(if $(filter $(SBFE_DEV_BLK1_WRITEABLE).$(SBFE_DEV_BLK1_READABLE).$(SBFE_DEV_BLK1_BIT_SET),true.true.false),\
+		$(eval export SBFE_VAR_BLK1_BURNABLE=1))
+	$(if $(filter $(SBFE_DEV_BLK2_WRITEABLE).$(SBFE_DEV_BLK2_READABLE).$(SBFE_DEV_BLK2_BIT_SET),true.true.false),\
+		$(eval export SBFE_VAR_BLK2_BURNABLE=1))
+	
+	$(eval SBFE_VAR_CODINGSCHEME=$(SBFE_DEV_CODINGSCHEME))
 
 SBFE_VAR_SB_KEY_FILENAME=secure_boot.key
 SBFE_VAR_FE_KEY_FILENAME=flash_encryption.key
