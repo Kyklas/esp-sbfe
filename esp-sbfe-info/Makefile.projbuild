@@ -13,7 +13,7 @@ ifneq ($(SBFE_DEV_SKIP_READ_DEV),1)
 endif
 
 $(SBFE_DEV_EFUSE_JSON):
-	$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before default_reset values -j $@ BLK1 BLK2 FLASH_CRYPT_CNT ABS_DONE_0 MAC CODING_SCHEME
+	$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before default_reset summary --file $@ --format json 
 
 #
 # jq is used to parse the JSON file
@@ -39,11 +39,11 @@ SBFE_DEV_KEYS_DIR_FINAL=
 # Processing at target execution the result of the efuse
 #
 sbfe-info: $(SBFE_DEV_EFUSE_JSON) tool_check_jq
-	$(eval SBFE_DEV_MAC=$(shell jq -r '.MAC.value_hex' $< ))
+	$(eval SBFE_DEV_MAC=$(firstword $(shell jq -r '.MAC.value' $< )))
 	$(eval SBFE_DEV_MAC_DIR=$(subst :,-,$(SBFE_DEV_MAC)))
 	$(eval SBFE_DEV_CODINGSCHEME=$(shell jq -r '.CODING_SCHEME.value' $<))
-	$(eval SBFE_DEV_BLK1_WRITEABLE=$(shell jq -r '.BLK1.writable' $<))
-	$(eval SBFE_DEV_BLK2_WRITEABLE=$(shell jq -r '.BLK2.writable' $<))
+	$(eval SBFE_DEV_BLK1_WRITEABLE=$(shell jq -r '.BLK1.writeable' $<))
+	$(eval SBFE_DEV_BLK2_WRITEABLE=$(shell jq -r '.BLK2.writeable' $<))
 	$(eval SBFE_DEV_BLK1_READABLE=$(shell jq -r '.BLK1.readable' $<))
 	$(eval SBFE_DEV_BLK2_READABLE=$(shell jq -r '.BLK2.readable' $<))
 	$(eval SBFE_DEV_BLK1=$(shell jq -r '.BLK1.value' $<))
