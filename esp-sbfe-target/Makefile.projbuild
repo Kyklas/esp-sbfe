@@ -56,9 +56,12 @@ SBFE_VAR_BURN_KEY_DIR=$(SBFE_BURN_KEY_DIR)/$(SBFE_DEV_MAC_DIR)
 SBFE_BURN_TARGETS=sbfe-burn sbfe-burn-sb sbfe-burn-fe
 
 .PHONY: $(SBFE_BURN_TARGETS)
-	
-	
-$(SBFE_BURN_TARGETS): sbfe-burnable sbfe-export
+
+sbfe-burnable-check: sbfe-burnable
+	$(if $(filter $(SBFE_VAR_BLK1_BURNABLE).$(SBFE_VAR_BLK2_BURNABLE),0.0),\
+	$(call sbfe_notify,FAIL : No keys are burnable !!); exit 1)
+
+$(SBFE_BURN_TARGETS): sbfe-burnable-check sbfe-export
 	$(SBFE_CMD_MAKE) $@
 
 

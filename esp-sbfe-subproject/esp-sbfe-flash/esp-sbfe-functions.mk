@@ -67,6 +67,11 @@ sbfe-flash-$1: $$(SBFE_FLSH_BIN_$(1)_DEP)
 	$(SBFE_FLH_DRYRUN) $(ESPTOOLPY_WRITE_FLASH) $$(SBFE_FLSH_BIN_$(1)_ARG)
 endif # SBFE_VAR_BIN_$(1)_OFFSET is not null
 endif # SBFE_VAR_BIN_$(1)_BIN is not null
+
+SBFE_FLSH_BIN_$(1)_DEP?=
+SBFE_FLSH_BIN_$(1)_ARG?=
+
+$$(if $$(SBFE_FLSH_BIN_$(1)_DEP),,$$(warning Binary $(1) has empty dependency))
 	
 endef # sbfe-declare-binary-target
 

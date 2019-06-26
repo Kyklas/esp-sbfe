@@ -19,19 +19,18 @@ endef
 SBFE_VAR_BLK2_BURNABLE?=
 SBFE_VAR_BLK1_BURNABLE?=
 
-ifneq ('$(SBFE_VAR_BLK1_BURNABLE).$(SBFE_VAR_BLK2_BURNABLE)','.')
+SBFE_KEY_BURN_DEFINED=
 
 SBFE_BURN_FORCE?=
 
-# Global target
-sbfe-burn: $(call fn_explicit_target,sbfe-burn,sbfe-burn-commit)
 
+# Generic target to commit key to git
 sbfe-burn-commit:
 	$(SBFE_KEY_GIT_CMD) commit -m "Dev Key : Adding device $(notdir $(SBFE_VAR_BURN_KEY_DIR)) keys"
 
 SBFE_ESPEFUSEPY=$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before no_reset
 
-SBFE_KEY_GIT_CMD=git -C $(dir $(SBFE_VAR_BURN_KEY_DIR))
+SBFE_KEY_GIT_CMD=$(SBFE_FLH_DRYRUN) git -C $(dir $(SBFE_VAR_BURN_KEY_DIR))
 
 sbfe-key-check: 
 	$(SBFE_KEY_GIT_CMD) config --get user.name || (echo "Git config missing user.name"; exit 1 ) 
@@ -42,12 +41,15 @@ $(SBFE_VAR_BURN_KEY_DIR): sbfe-key-check
 
 $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME) $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME) : sbfe-key-check | $(SBFE_VAR_BURN_KEY_DIR)
 	$(eval SBFE_KEY_SIZE=$(call fn_keysize_from_codingscheme))
+	$(eval SBFE_KEY_CREATED=1)
 	echo "Generating $(SBFE_STYLE_TARGET)$@$(SBFE_STYLE_CLEAR) with $(SBFE_KEY_SIZE) bytes"
 	$(SBFE_FLH_DRYRUN) openssl rand -out $@ $(SBFE_KEY_SIZE)
 	$(SBFE_FLH_DRYRUN) hexdump -C $@
 
 
 ifeq ($(SBFE_VAR_BLK2_BURNABLE),1)
+
+.NOTPARALLEL: sbfe-burn-sb-burn sbfe-burn-sb-add
 
 # Burn Secure Boot Key, aka BLOCK2 BLK2
 sbfe-burn-sb-burn: $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME)
@@ -56,16 +58,22 @@ sbfe-burn-sb-burn: $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME)
 
 # All done, add key
 sbfe-burn-sb-add: sbfe-burn-sb-burn
-	$(SBFE_KEY_GIT_CMD) add $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME)
-	
+	$(if $(SBFE_KEY_CREATED),$(eval SBFE_KEY_ADDED=1) \
+	$(SBFE_KEY_GIT_CMD) add $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME))
+
 sbfe-burn-commit: $(call fn_explicit_target,sbfe-burn sbfe-burn-sb,sbfe-burn-sb-add)
 
-sbfe-burn-sb: $(call fn_explicit_target,sbfe-burn-sb,sbfe-burn-commit)
+sbfe-burn-sb: sbfe-burn-commit
+
+sbfe-burn: sbfe-burn-sb
+
+SBFE_KEY_BURN_DEFINED=1
 
 endif # If device has block 2 burnable
 
 ifeq ($(SBFE_VAR_BLK1_BURNABLE),1)
 
+.NOTPARALLEL: sbfe-burn-fe-burn sbfe-burn-fe-add
 
 # Burn Flash Encryption Key, aka BLOCK1 BLK1
 sbfe-burn-fe-burn: $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)
@@ -74,17 +82,23 @@ sbfe-burn-fe-burn: $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)
 
 # All done, add key
 sbfe-burn-fe-add: sbfe-burn-fe-burn
-	$(SBFE_KEY_GIT_CMD) add $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)
+	$(if $(SBFE_KEY_CREATED),$(eval SBFE_KEY_ADDED=1) \
+	$(SBFE_KEY_GIT_CMD) add $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME))
 	
 sbfe-burn-commit: $(call fn_explicit_target,sbfe-burn sbfe-burn-fe,sbfe-burn-fe-add)
 
-sbfe-burn-fe: $(call fn_explicit_target,sbfe-burn-fe,sbfe-burn-commit)
+sbfe-burn-fe: sbfe-burn-commit
+
+sbfe-burn: sbfe-burn-fe
+
+SBFE_KEY_BURN_DEFINED=1
+
 endif # If device has block 1 burnable
 
-else # Some key should be burnable
 
-sbfe-burn sbfe-burn-fe sbfe-burn-sb:
+sbfe-burn sbfe-burn-sb sbfe-burn-fe:
+ifneq ($(SBFE_KEY_BURN_DEFINED),1)
 	$(call sbfe_notify,FAIL : No keys are burnable)
 	exit 1
-
 endif
+
