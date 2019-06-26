@@ -32,20 +32,27 @@ SBFE_ESPEFUSEPY=$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before no_re
 
 SBFE_KEY_GIT_CMD=$(SBFE_FLH_DRYRUN) git -C $(dir $(SBFE_VAR_BURN_KEY_DIR))
 
+#
+# Only generate key for efuse burning target
+# else flashing target could make keys
+#
+ifneq ($(filter sbfe-burn sbfe-burn-sb sbfe-burn-fe,$(MAKECMDGOALS)),)
+
 sbfe-key-check: 
 	$(SBFE_KEY_GIT_CMD) config --get user.name || (echo "Git config missing user.name"; exit 1 ) 
 	$(SBFE_KEY_GIT_CMD) config --get user.email || (echo "Git config missing user.email"; exit 1 ) 
 
-$(SBFE_VAR_BURN_KEY_DIR): sbfe-key-check
-	$(SBFE_FLH_DRYRUN) mkdir $@
+$(SBFE_VAR_BURN_KEY_DIR): | sbfe-key-check
+	$(SBFE_FLH_DRYRUN) mkdir -p $@
 
-$(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME) $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME) : sbfe-key-check | $(SBFE_VAR_BURN_KEY_DIR)
+$(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME) $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME) : | sbfe-key-check $(SBFE_VAR_BURN_KEY_DIR)
 	$(eval SBFE_KEY_SIZE=$(call fn_keysize_from_codingscheme))
 	$(eval SBFE_KEY_CREATED=1)
 	echo "Generating $(SBFE_STYLE_TARGET)$@$(SBFE_STYLE_CLEAR) with $(SBFE_KEY_SIZE) bytes"
 	$(SBFE_FLH_DRYRUN) openssl rand -out $@ $(SBFE_KEY_SIZE)
 	$(SBFE_FLH_DRYRUN) hexdump -C $@
 
+endif
 
 ifeq ($(SBFE_VAR_BLK2_BURNABLE),1)
 
