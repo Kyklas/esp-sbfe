@@ -46,6 +46,9 @@ sbfe-flash-check: sbfe-check-compat $$(SBFE_FLASH_CHECK_DEP)
 # SBFE Burn Key
 #
 
+# Device MAC Directory is set by sbfe-info target
+SBFE_DEV_MAC_DIR?=
+
 # default directory to save key 
 SBFE_BURN_CMPT_KEY_DIR:=$(abspath $(COMPONENT_PATH)/../esp-sbfe-keys)
 # can be overwriten

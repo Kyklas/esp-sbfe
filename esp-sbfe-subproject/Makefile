@@ -23,10 +23,14 @@ export IS_BOOTLOADER_BUILD
 #CONFIG_SECURE_BOOT_BUILD_SIGNED_BINARIES?=
 #CONFIG_SECURE_BOOT_ENABLED?=
 
-ifneq ($(V),)
-$(foreach V,$(sort $(.VARIABLES)), \
+define print-sbfe-vars
+$(foreach var,$(sort $(.VARIABLES)), \
 	$(if $(filter SBFE_VAR%, \
-	$V),$(info - $V : $($V)) ))
+	$(var)),$(info - $(var) : $($(var))) ))
+endef
+
+ifneq ($(V),)
+$(call print-sbfe-vars)
 endif
 
 
