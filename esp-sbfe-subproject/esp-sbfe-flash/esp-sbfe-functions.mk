@@ -41,7 +41,7 @@ endif # Secure Boot check
 ifeq ($(SBFE_VAR_BIN_$(1)_ENC).$(SBFE_VAR_FLASH_ENCRYPTION),1.1)
 # Flashing with encrypted binary
 
-$(eval SBFE_FLSH_BIN_$(1)_BIN_ENC=$(basename $(SBFE_VAR_BIN_$(1)_BIN))-encrypted.bin)
+$(eval SBFE_FLSH_BIN_$(1)_BIN_ENC=$(basename $(SBFE_VAR_BIN_$(1)_BIN))-encrypted-$(firstword $(SBFE_VAR_BIN_$(1)_OFFSET)).bin)
 
 .INTERMEDIATE: $(SBFE_FLSH_BIN_$(1)_BIN_ENC)
 
