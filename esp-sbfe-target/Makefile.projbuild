@@ -28,10 +28,16 @@ SBFE_CMD_MAKE= + \
 
 .PHONY: sbfe-pjr sbfe-export
 
+define DEF_SBFE_VAR_EXPORT
+	$(foreach VAR,$(sort $(.VARIABLES)), \
+	$(if $(filter SBFE_VAR%,$(VAR)), \
+	$(if $(V), $(info Exporting $(VAR))) \
+	export $(VAR) ))
+endef
+
 # Exporting variable to subproject
 sbfe-export:
-	$(eval $(foreach V,$(sort $(.VARIABLES)), \
-		$(if $(filter SBFE_VAR%,$V), export $V )))
+	$(eval $(call DEF_SBFE_VAR_EXPORT))
 
 sbfe-pjr: sbfe-export
 	$(SBFE_CMD_MAKE) $@
@@ -64,7 +70,12 @@ sbfe-burnable-check: sbfe-burnable
 	$(if $(filter $(SBFE_VAR_BLK1_BURNABLE).$(SBFE_VAR_BLK2_BURNABLE),0.0),\
 	$(call sbfe_notify,FAIL : No keys are burnable !!); exit 1)
 
-$(SBFE_BURN_TARGETS): sbfe-burnable-check sbfe-export
+# Exporting variable to subproject
+# last action done, sbfe-burnable set variable that needs exporting
+sbfe-export-burn: sbfe-burnable-check 
+	$(eval $(call DEF_SBFE_VAR_EXPORT))
+
+$(SBFE_BURN_TARGETS): sbfe-export-burn 
 	$(SBFE_CMD_MAKE) $@
 
 

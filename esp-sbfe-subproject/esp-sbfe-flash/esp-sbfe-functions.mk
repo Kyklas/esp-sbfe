@@ -71,7 +71,7 @@ endif # SBFE_VAR_BIN_$(1)_BIN is not null
 SBFE_FLSH_BIN_$(1)_DEP?=
 SBFE_FLSH_BIN_$(1)_ARG?=
 
-$$(if $$(SBFE_FLSH_BIN_$(1)_DEP),,$$(call print-sbfe-vars) $$(error Binary $(1) has empty dependency))
+$$(if $$(SBFE_FLSH_BIN_$(1)_DEP),,$$(call print-sbfe-vars) $$(error Binary $(1) has empty dependency or offset))
 	
 endef # sbfe-declare-binary-target
 

@@ -11,6 +11,11 @@ sbfe-pjr:
 
 include $(COMPONENT_PATH)/esp-sbfe-functions.mk
 
+# handling flashing targets if sbfe-flash is called
+ifneq ($(filter sbfe-flash-%,$(MAKECMDGOALS)),)
+
 $(foreach bin,$(SBFE_VAR_BIN_IDX),$(eval $(call sbfe-declare-binary-target,$(bin))))
 
 $(foreach flhtgt,$(SBFE_VAR_FLSH_IDX),$(eval $(call sbfe-declare-flash-target,$(flhtgt))))
+
+endif
