@@ -28,9 +28,14 @@ SBFE_BURN_FORCE?=
 sbfe-burn-commit:
 	$(SBFE_KEY_GIT_CMD) commit -m "Dev Key : Adding device $(notdir $(SBFE_VAR_BURN_KEY_DIR)) keys"
 
-SBFE_ESPEFUSEPY=$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before no_reset
+SBFE_ESPEFUSEPY=$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) 
 
 SBFE_KEY_GIT_CMD=$(SBFE_FLH_DRYRUN) git -C $(dir $(SBFE_VAR_BURN_KEY_DIR))
+
+.NOTPARALLEL: sbfe-burn-connect
+# Force a reconnect to the device
+sbfe-burn-connect:
+	$(SBFE_FLH_DRYRUN) $(SBFE_ESPEFUSEPY) --before default_reset dump
 
 #
 # Only generate key for efuse burning target
@@ -38,7 +43,7 @@ SBFE_KEY_GIT_CMD=$(SBFE_FLH_DRYRUN) git -C $(dir $(SBFE_VAR_BURN_KEY_DIR))
 #
 ifneq ($(filter sbfe-burn sbfe-burn-sb sbfe-burn-fe,$(MAKECMDGOALS)),)
 
-sbfe-key-check: 
+sbfe-key-check: sbfe-burn-connect
 	$(SBFE_KEY_GIT_CMD) config --get user.name || (echo "Git config missing user.name"; exit 1 ) 
 	$(SBFE_KEY_GIT_CMD) config --get user.email || (echo "Git config missing user.email"; exit 1 ) 
 
@@ -59,8 +64,9 @@ ifeq ($(SBFE_VAR_BLK2_BURNABLE),1)
 .NOTPARALLEL: sbfe-burn-sb-burn sbfe-burn-sb-add
 
 # Burn Secure Boot Key, aka BLOCK2 BLK2
-sbfe-burn-sb-burn: $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME)
-	$(SBFE_FLH_DRYRUN) $(SBFE_ESPEFUSEPY) $(if $(filter $(SBFE_BURN_FORCE),yes),--do-not-confirm) \
+sbfe-burn-sb-burn: $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME) sbfe-burn-connect
+	$(SBFE_FLH_DRYRUN) $(SBFE_ESPEFUSEPY) --before no_reset \
+		$(if $(filter $(SBFE_BURN_FORCE),yes),--do-not-confirm) \
 		burn_key secure_boot $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_SB_KEY_FILENAME)
 
 # All done, add key
@@ -83,8 +89,9 @@ ifeq ($(SBFE_VAR_BLK1_BURNABLE),1)
 .NOTPARALLEL: sbfe-burn-fe-burn sbfe-burn-fe-add
 
 # Burn Flash Encryption Key, aka BLOCK1 BLK1
-sbfe-burn-fe-burn: $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)
-	$(SBFE_FLH_DRYRUN) $(SBFE_ESPEFUSEPY) $(if $(filter $(SBFE_BURN_FORCE),yes),--do-not-confirm) \
+sbfe-burn-fe-burn: $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME) sbfe-burn-connect
+	$(SBFE_FLH_DRYRUN) $(SBFE_ESPEFUSEPY) --before no_reset \
+		$(if $(filter $(SBFE_BURN_FORCE),yes),--do-not-confirm) \
 		burn_key flash_encryption $(SBFE_VAR_BURN_KEY_DIR)/$(SBFE_VAR_FE_KEY_FILENAME)
 
 # All done, add key

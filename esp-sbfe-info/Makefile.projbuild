@@ -12,6 +12,9 @@ ifneq ($(SBFE_DEV_SKIP_READ_DEV),1)
 .PHONY: $(SBFE_DEV_EFUSE_JSON)
 endif
 
+# avoid processing other things while connecting to the device
+.NOTPARALLEL: $(SBFE_DEV_EFUSE_JSON)
+
 $(SBFE_DEV_EFUSE_JSON):
 	$(ESPEFUSEPY) --port $(ESPPORT) --baud $(ESPBAUD) --before default_reset summary --file $@ --format json 
 
