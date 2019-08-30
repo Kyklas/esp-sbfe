@@ -8,6 +8,8 @@
 
 SBFE_DEV_EFUSE_JSON=$(BUILD_DIR_BASE)/esp_sbfe_dev_efuse.json
 
+SBFE_DEV_SKIP_READ_DEV?=
+
 ifneq ($(SBFE_DEV_SKIP_READ_DEV),1)
 .PHONY: $(SBFE_DEV_EFUSE_JSON)
 endif

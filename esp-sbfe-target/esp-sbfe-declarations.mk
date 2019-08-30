@@ -12,6 +12,8 @@
 # $4 encryption (1-enable)
 #
 define sbfe-declare-binary
+$(eval 4?=)
+$(eval 5?=)
 $(if $(V),$(info SBFE - declaration of binary variables for $1 - $2 $3 $4 $5))
 $(eval SBFE_VAR_BIN_IDX+=$1)
 $(eval SBFE_VAR_BIN_$(1)_BIN=$2)
